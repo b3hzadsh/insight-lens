@@ -24,7 +24,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initializeServices();
+    Future.delayed(Duration.zero, () {
+      _initializeServices();
+    });
   }
 
   Future<void> _initializeServices() async {

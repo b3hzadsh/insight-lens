@@ -6,6 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:test_app/recognition_isolate.dart';
 
 class TensorflowService {
+  static final TensorflowService _instance = TensorflowService._internal();
+
+  factory TensorflowService() => _instance;
+
+  TensorflowService._internal();
   final StreamController<List<Recognition>> _recognitionController =
       StreamController.broadcast();
   Stream<List<Recognition>> get recognitionStream =>
@@ -14,13 +19,15 @@ class TensorflowService {
   SendPort? _isolateSendPort;
   bool _isReady = false;
   bool get isReady => _isReady;
+  final Completer<void> _readyCompleter = Completer<void>();
+  Future<void> get readyFuture => _readyCompleter.future;
 
   Future<void> start() async {
     final receivePort = ReceivePort(); // پورتی برای دریافت پیام از Isolate
     try {
       // --- ۱. بارگذاری مدل و لیبل‌ها ---
       final modelFileName = 'mobilenet_v1_1.0_224.tflite';
-      final labelsData = await rootBundle.loadString('assets/labels.txt');
+      final labelsData = await rootBundle.loadString('assets/labels_fa.txt');
       final modelData = await rootBundle.load('assets/$modelFileName');
       final modelBytes = modelData.buffer.asUint8List();
       final labels = labelsData.split('\n');
@@ -52,6 +59,9 @@ class TensorflowService {
           // اولین پیام، SendPort خود Isolate است. آن را ذخیره می‌کنیم.
           _isolateSendPort = message;
           _isReady = true;
+          if (!_readyCompleter.isCompleted) {
+            _readyCompleter.complete();
+          }
           print(
             '✅ [MAIN THREAD] Isolate send port received. Service is ready.',
           );
@@ -62,6 +72,9 @@ class TensorflowService {
               .toList();
           _recognitionController.add(recognitions); // ارسال نتایج به UI
         } else if (message is String && message.contains('Error')) {
+          if (!_readyCompleter.isCompleted) {
+            _readyCompleter.completeError(message);
+          }
           // مدیریت پیام‌های خطا از سمت Isolate
           print('❌ $message');
           _recognitionController.addError(message);

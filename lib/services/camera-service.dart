@@ -35,6 +35,8 @@ class CameraService {
     }
   }
 
+  // file: services/camera-service.dart
+
   Future<void> startStreaming() async {
     if (_cameraController == null || !_cameraController!.value.isInitialized) {
       print('❌ CameraController not initialized');
@@ -44,26 +46,27 @@ class CameraService {
       print('Already streaming');
       return;
     }
-    // Wait for TensorflowService to be ready
-    for (int i = 0; i < 10 && !_tensorflowService.isReady; i++) {
-      await Future.delayed(Duration(milliseconds: 100));
-      print('[CAMERA] Waiting for TensorflowService to be ready... Attempt $i');
-    }
-    if (!_tensorflowService.isReady) {
-      print('❌ TensorflowService not ready after timeout');
+
+    print('[CAMERA] Waiting for TensorflowService to be ready...');
+    try {
+      // حلقه for قبلی را حذف و این خط را جایگزین کن
+      await _tensorflowService.readyFuture.timeout(const Duration(seconds: 5));
+    } catch (e) {
+      print('❌ TensorflowService not ready after timeout: $e');
       return;
     }
+    print('[CAMERA] ✅ TensorflowService is ready. Starting image stream.');
 
     try {
       await _cameraController!.startImageStream((CameraImage image) async {
         _frameCounter++;
-        if (_frameCounter % 3 != 0) return; // Skip every 3rd frame
+        if (_frameCounter % 3 != 0) return;
         if (_isPredicting) return;
+
         _isPredicting = true;
         try {
-          print(
-            '--- Frame Received at ${DateTime.now()}! Sending to service... ---',
-          );
+          // این لاگ بسیار مهم است، آن را اضافه کن
+          print('[CAMERA] Sending frame to TensorflowService...');
           _tensorflowService.runModel(image);
         } catch (e) {
           print('❌ Error dispatching frame to isolate: $e');
@@ -71,7 +74,7 @@ class CameraService {
           _isPredicting = false;
         }
       });
-      print('✅ Image streaming started');
+      print('✅ Image streaming started successfully');
     } catch (e) {
       print('❌ Error starting image stream: $e');
     }
