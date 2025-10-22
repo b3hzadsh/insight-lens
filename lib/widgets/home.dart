@@ -33,10 +33,20 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       print('--- Starting One-Time Initialization ---');
       await _cameraService.startService(widget.camera);
       await _tensorflowService.start();
+      // Wait until TensorflowService is ready
+      for (int i = 0; i < 10 && !_tensorflowService.isReady; i++) {
+        await Future.delayed(Duration(milliseconds: 100));
+        print('[HOME] Waiting for TensorflowService to be ready... Attempt $i');
+      }
+      if (!_tensorflowService.isReady) {
+        throw Exception('TensorflowService failed to initialize');
+      }
       await _cameraService.startStreaming();
-      setState(() {
-        _isInitialized = true;
-      });
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
       print('--- One-Time Initialization Complete ---');
     } catch (e) {
       print('❌ Error initializing services: $e');
@@ -54,7 +64,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.resumed:
         print('App Resumed: Starting camera stream.');
-        _cameraService.startStreaming();
+        if (_isInitialized) {
+          _cameraService.startStreaming();
+        }
         break;
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
@@ -69,6 +81,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _cameraService.stopImageStream();
     _cameraService.dispose();
     _tensorflowService.stop();
     print('✅ Home disposed');

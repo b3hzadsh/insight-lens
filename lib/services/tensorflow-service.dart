@@ -10,9 +10,10 @@ class TensorflowService {
       StreamController.broadcast();
   Stream<List<Recognition>> get recognitionStream =>
       _recognitionController.stream;
-
   Isolate? _isolate;
   SendPort? _isolateSendPort;
+  bool _isReady = false;
+  bool get isReady => _isReady;
 
   Future<void> start() async {
     final receivePort = ReceivePort();
@@ -40,6 +41,7 @@ class TensorflowService {
         );
         if (message is SendPort) {
           _isolateSendPort = message;
+          _isReady = true;
           print('✅ [MAIN THREAD] Isolate send port received.');
         } else if (message is List<Map<String, dynamic>>) {
           final recognitions = message
@@ -54,12 +56,13 @@ class TensorflowService {
     } catch (e) {
       print('❌ Error starting TensorflowService: $e');
       _recognitionController.addError('Error starting service: $e');
+      _isReady = false;
     }
   }
 
   void runModel(CameraImage image) {
-    if (_isolateSendPort == null) {
-      print('❌ Isolate SendPort not initialized');
+    if (_isolateSendPort == null || !_isReady) {
+      print('❌ Isolate SendPort not initialized or not ready');
       return;
     }
     try {
@@ -86,6 +89,7 @@ class TensorflowService {
     _isolate?.kill(priority: Isolate.immediate);
     _isolate = null;
     _isolateSendPort = null;
+    _isReady = false;
     _recognitionController.close();
     print('✅ TensorflowService stopped');
   }

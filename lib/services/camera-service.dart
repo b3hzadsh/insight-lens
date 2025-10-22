@@ -44,6 +44,10 @@ class CameraService {
       print('Already streaming');
       return;
     }
+    if (!_tensorflowService.isReady) {
+      print('❌ TensorflowService not ready');
+      return;
+    }
 
     try {
       await _cameraController!.startImageStream((CameraImage image) async {
@@ -55,7 +59,7 @@ class CameraService {
           print(
             '--- Frame Received at ${DateTime.now()}! Sending to service... ---',
           );
-          _tensorflowService.runModel(image); // Removed await
+          _tensorflowService.runModel(image); // No await
         } catch (e) {
           print('❌ Error dispatching frame to isolate: $e');
         } finally {
