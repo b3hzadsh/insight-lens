@@ -1,31 +1,53 @@
-import 'dart:async';
-// import 'package:FlutterMobilenet/widgets/home.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:test_app/widgets/home.dart';
 
 Future<void> main() async {
-  // Ensure that plugin services are initialized so that `availableCameras()`
-  // can be called before `runApp()`
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Obtain a list of the available cameras on the device.
-  final cameras = await availableCameras();
+  try {
+    var status = await Permission.camera.request();
+    if (!status.isGranted) {
+      print('❌ Camera permission denied');
+      runApp(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(child: Text('Camera permission required')),
+          ),
+        ),
+      );
+      return;
+    }
 
-  // Get a specific camera from the list of available cameras.
-  final firstCamera = cameras.first;
+    final cameras = await availableCameras();
+    if (cameras.isEmpty) {
+      print('❌ No cameras available');
+      runApp(
+        MaterialApp(
+          home: Scaffold(body: Center(child: Text('No camera found'))),
+        ),
+      );
+      return;
+    }
 
-  runApp(
-    MaterialApp(
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: Color(0xFFFF00FF),
+    final firstCamera = cameras.first;
+    print('✅ Camera loaded: ${firstCamera.name}');
+    runApp(
+      MaterialApp(
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          primaryColor: Color(0xFFFF00FF),
+        ),
+        home: Home(camera: firstCamera),
       ),
-      theme: ThemeData.dark(),
-      home: Home(
-        // Pass the appropriate camera to the TakePictureScreen widget.
-        camera: firstCamera,
+    );
+  } catch (e) {
+    print('❌ Error initializing app: $e');
+    runApp(
+      MaterialApp(
+        home: Scaffold(body: Center(child: Text('Error initializing app: $e'))),
       ),
-    ),
-  );
+    );
+  }
 }

@@ -1,7 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-
-// مسیرها را متناسب با ساختار پروژه خودتان تنظیم کنید
+import 'package:test_app/recognition_isolate.dart';
 import 'package:test_app/services/camera-service.dart';
 import 'package:test_app/services/tensorflow-service.dart';
 import 'package:test_app/widgets/camera-header.dart';
@@ -10,97 +9,105 @@ import 'package:test_app/widgets/recognition.dart';
 
 class Home extends StatefulWidget {
   final CameraDescription camera;
-
   const Home({Key? key, required this.camera}) : super(key: key);
 
   @override
-  State<Home> createState() => _HomeState();
+  _HomeState createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
-  // Services injection
   final TensorflowService _tensorflowService = TensorflowService();
   final CameraService _cameraService = CameraService();
-
-  // Future برای کنترل وضعیت مقداردهی اولیه سرویس‌ها
-  late Future<void> _initializeServicesFuture;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // در initState، فرآیند طولانی مقداردهی اولیه را شروع می‌کنیم
-    _initializeServicesFuture = _initializeServices();
+    _initializeServices();
   }
 
-  // متد اصلی برای مقداردهی اولیه سرویس‌ها
   Future<void> _initializeServices() async {
-    await _cameraService.startService(widget.camera);
-    await _tensorflowService.loadModel();
-    // پس از لود شدن مدل، استریم تصویر را شروع می‌کنیم
-    _cameraService.startStreaming();
+    if (_isInitialized) return;
+    try {
+      print('--- Starting One-Time Initialization ---');
+      await _cameraService.startService(widget.camera);
+      await _tensorflowService.start();
+      await _cameraService.startStreaming();
+      setState(() {
+        _isInitialized = true;
+      });
+      print('--- One-Time Initialization Complete ---');
+    } catch (e) {
+      print('❌ Error initializing services: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error initializing: $e')));
+      }
+    }
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    // منابع هر دو سرویس را آزاد می‌کنیم
-    _cameraService.dispose();
-    _tensorflowService.dispose();
-    super.dispose();
-  }
-
-  // مدیریت بهینه چرخه حیات اپلیکیشن
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // اگر اپلیکیشن متوقف یا غیرفعال شد، استریم دوربین را برای صرفه‌جویی در باتری متوقف می‌کنیم
-    // و هنگام بازگشت، دوباره آن را فعال می‌کنیم.
     switch (state) {
       case AppLifecycleState.resumed:
+        print('App Resumed: Starting camera stream.');
         _cameraService.startStreaming();
         break;
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
+        print('App Paused/Inactive: Stopping camera stream.');
         _cameraService.stopImageStream();
         break;
     }
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cameraService.dispose();
+    _tensorflowService.stop();
+    print('✅ Home disposed');
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
-      body: FutureBuilder<void>(
-        // منتظر می‌مانیم تا فرآیند مقداردهی اولیه تمام شود
-        future: _initializeServicesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            // اگر همه چیز آماده بود، پیش‌نمایش دوربین و نتایج را نشان بده
-            return Stack(
-              children: <Widget>[
-                // ویجت نمایش پیش‌نمایش دوربین
-                CameraScreen(controller: _cameraService.cameraController),
-                // هدر بالای صفحه
-                const CameraHeader(),
-                // استفاده از StreamBuilder برای نمایش نتایج زنده
-                StreamBuilder<List<Recognition>>(
-                  stream: _tensorflowService.recognitionStream,
-                  builder: (context, recognitionSnapshot) {
-                    return RecognitionWidget(
-                      // داده‌های جدید را به ویجت نمایش نتایج پاس می‌دهیم
-                      results: recognitionSnapshot.data,
-                    );
-                  },
-                ),
-              ],
-            );
-          } else {
-            // در غیر این صورت، یک نمایشگر لودینگ نشان بده
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
+      body: Stack(
+        children: [
+          CameraScreen(controller: _cameraService.cameraController),
+          CameraHeader(),
+          StreamBuilder<List<Recognition>>(
+            stream: _tensorflowService.recognitionStream,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Positioned(
+                  bottom: 20,
+                  left: 20,
+                  right: 20,
+                  child: Container(
+                    color: Colors.black54,
+                    padding: EdgeInsets.all(8),
+                    child: Text(
+                      'Error: ${snapshot.error}',
+                      style: TextStyle(color: Colors.red, fontSize: 16),
+                    ),
+                  ),
+                );
+              }
+              return RecognitionWidget(results: snapshot.data ?? []);
+            },
+          ),
+        ],
       ),
     );
   }
