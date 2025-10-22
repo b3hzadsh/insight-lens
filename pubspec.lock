@@ -29,18 +29,18 @@ packages:
     dependency: "direct main"
     description:
       name: camera
-      sha256: d6ec2cbdbe2fa8f5e0d07d8c06368fe4effa985a4a5ddade9cc58a8cd849557d
+      sha256: "87a27e0553e3432119c1c2f6e4b9a1bbf7d2c660552b910bfa59185a9facd632"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.11.2"
+    version: "0.11.2+1"
   camera_android_camerax:
     dependency: transitive
     description:
       name: camera_android_camerax
-      sha256: a3b96427f89fe5a7e0253f51f02d93e104a3ec51993a928963a5d2e1be71850d
+      sha256: dfa51247e911c5171d5d96327250b00cd4424c7e9874c1becb37447d530a6546
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.6.23+3"
+    version: "0.6.23+4"
   camera_avfoundation:
     dependency: transitive
     description:

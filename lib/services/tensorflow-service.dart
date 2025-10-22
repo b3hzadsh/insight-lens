@@ -27,7 +27,7 @@ class TensorflowService {
     try {
       // --- ۱. بارگذاری مدل و لیبل‌ها ---
       final modelFileName = 'mobilenet_v1_1.0_224.tflite';
-      final labelsData = await rootBundle.loadString('assets/labels_fa.txt');
+      final labelsData = await rootBundle.loadString('assets/labels.txt');
       final modelData = await rootBundle.load('assets/$modelFileName');
       final modelBytes = modelData.buffer.asUint8List();
       final labels = labelsData.split('\n');

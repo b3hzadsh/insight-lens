@@ -107,9 +107,16 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     return Scaffold(
       body: Stack(
+        fit: StackFit.expand, // دوربین تمام صفحه را پوشش می‌دهد
         children: [
-          CameraScreen(controller: _cameraService.cameraController),
-          CameraHeader(),
+          // دوربین - لایه اول (پس‌زمینه)
+          SizedBox.expand(
+            child: CameraScreen(controller: _cameraService.cameraController),
+          ),
+          // هدر (لوگو) - لایه دوم (بالای صفحه)
+          Positioned(top: 0, left: 0, right: 0, child: CameraHeader()),
+      
+          // نتایج تشخیص - لایه سوم (پایین صفحه)
           StreamBuilder<List<Recognition>>(
             stream: _tensorflowService.recognitionStream,
             builder: (context, snapshot) {
@@ -119,11 +126,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   left: 20,
                   right: 20,
                   child: Container(
-                    color: Colors.black54,
-                    padding: EdgeInsets.all(8),
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Text(
                       'Error: ${snapshot.error}',
                       style: TextStyle(color: Colors.red, fontSize: 16),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 );

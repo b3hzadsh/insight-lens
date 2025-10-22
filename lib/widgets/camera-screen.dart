@@ -29,6 +29,7 @@ class CameraScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final deviceRatio = size.width / size.height;
     final previewRatio = controller!.value.aspectRatio;
+    return CameraPreview(controller!);
 
     return Transform.scale(
       scale: deviceRatio / previewRatio,

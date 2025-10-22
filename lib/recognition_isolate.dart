@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
+// new by per
 class IsolateCameraImage {
   final List<Uint8List> planes;
   final int height;
@@ -34,6 +36,7 @@ class Recognition {
   Recognition(this.label, this.confidence);
 }
 
+// تبدیل YUV420 بدون استفاده از helper
 img.Image? _convertYUV420(IsolateCameraImage image) {
   final int width = image.width;
   final int height = image.height;
@@ -41,26 +44,44 @@ img.Image? _convertYUV420(IsolateCameraImage image) {
   final int uvPixelStride = image.uvPixelStride;
 
   try {
+    print('[ISOLATE] Converting YUV420 to RGB...');
+    print('[ISOLATE] Image size: ${width}x${height}');
+    print('[ISOLATE] UV stride: row=$uvRowStride, pixel=$uvPixelStride');
+
     final yuv420image = img.Image(width: width, height: height);
+
+    // یک حلقه ساده برای تبدیل YUV به RGB
+    // فرمول تبدیل:
+    // R = Y + 1.402 * (V - 128)
+    // G = Y - 0.344136 * (U - 128) - 0.714136 * (V - 128)
+    // B = Y + 1.772 * (U - 128)
+
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
         final int uvIndex = uvPixelStride * (x ~/ 2) + uvRowStride * (y ~/ 2);
         final int index = y * width + x;
+
+        // دریافت مقادیر YUV
         final yp = image.planes[0][index];
         final up = image.planes[1][uvIndex];
         final vp = image.planes[2][uvIndex];
+
+        // تبدیل به RGB
         int r = (yp + vp * 1436 / 1024 - 179).round().clamp(0, 255);
         int g = (yp - up * 46549 / 131072 + 44 - vp * 93604 / 131072 + 91)
             .round()
             .clamp(0, 255);
         int b = (yp + up * 1814 / 1024 - 227).round().clamp(0, 255);
+
+        // تنظیم pixel در تصویر
         yuv420image.setPixelRgba(x, y, r, g, b, 255);
       }
     }
-    print('[ISOLATE] YUV420 converted to RGB: ${width}x${height}');
+
+    print('[ISOLATE] YUV420 conversion completed: ${width}x${height} -> RGB');
     return yuv420image;
   } catch (e) {
-    print('[ISOLATE] Error converting YUV420: $e');
+    print('[ISOLATE] ❌ Error in YUV420 conversion: $e');
     return null;
   }
 }
@@ -169,6 +190,7 @@ List<List<List<List<double>>>>? _processCameraImage(
       convertedImage,
       size: modelInputSize,
     );
+
     var imageBytes = resizedImage.getBytes(order: img.ChannelOrder.rgb);
     var modelInput = List.generate(
       1,
@@ -182,9 +204,10 @@ List<List<List<List<double>>>>? _processCameraImage(
     int pixelIndex = 0;
     for (int i = 0; i < modelInputSize; i++) {
       for (int j = 0; j < modelInputSize; j++) {
-        modelInput[0][i][j][0] = imageBytes[pixelIndex++] / 255.0; // R
-        modelInput[0][i][j][1] = imageBytes[pixelIndex++] / 255.0; // G
-        modelInput[0][i][j][2] = imageBytes[pixelIndex++] / 255.0; // B
+        // نرمال‌سازی صحیح برای MobileNet: -1 تا +1
+        modelInput[0][i][j][0] = (imageBytes[pixelIndex++] / 127.5) - 1.0; // R
+        modelInput[0][i][j][1] = (imageBytes[pixelIndex++] / 127.5) - 1.0; // G
+        modelInput[0][i][j][2] = (imageBytes[pixelIndex++] / 127.5) - 1.0; // B
       }
     }
     return modelInput;
