@@ -44,8 +44,13 @@ class CameraService {
       print('Already streaming');
       return;
     }
+    // Wait for TensorflowService to be ready
+    for (int i = 0; i < 10 && !_tensorflowService.isReady; i++) {
+      await Future.delayed(Duration(milliseconds: 100));
+      print('[CAMERA] Waiting for TensorflowService to be ready... Attempt $i');
+    }
     if (!_tensorflowService.isReady) {
-      print('❌ TensorflowService not ready');
+      print('❌ TensorflowService not ready after timeout');
       return;
     }
 
@@ -59,7 +64,7 @@ class CameraService {
           print(
             '--- Frame Received at ${DateTime.now()}! Sending to service... ---',
           );
-          _tensorflowService.runModel(image); // No await
+          _tensorflowService.runModel(image);
         } catch (e) {
           print('❌ Error dispatching frame to isolate: $e');
         } finally {
@@ -85,6 +90,7 @@ class CameraService {
   }
 
   void dispose() {
+    stopImageStream();
     _cameraController?.dispose();
     _cameraController = null;
     _tensorflowService.stop();

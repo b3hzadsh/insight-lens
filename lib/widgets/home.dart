@@ -31,17 +31,26 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     if (_isInitialized) return;
     try {
       print('--- Starting One-Time Initialization ---');
-      await _cameraService.startService(widget.camera);
-      await _tensorflowService.start();
-      // Wait until TensorflowService is ready
-      for (int i = 0; i < 10 && !_tensorflowService.isReady; i++) {
-        await Future.delayed(Duration(milliseconds: 100));
-        print('[HOME] Waiting for TensorflowService to be ready... Attempt $i');
-      }
-      if (!_tensorflowService.isReady) {
-        throw Exception('TensorflowService failed to initialize');
-      }
-      await _cameraService.startStreaming();
+      await _cameraService
+          .startService(widget.camera)
+          .timeout(
+            Duration(seconds: 5),
+            onTimeout: () {
+              throw Exception('Camera initialization timed out');
+            },
+          );
+      await _tensorflowService.start().timeout(
+        Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('TensorflowService initialization timed out');
+        },
+      );
+      await _cameraService.startStreaming().timeout(
+        Duration(seconds: 5),
+        onTimeout: () {
+          throw Exception('Camera streaming timed out');
+        },
+      );
       if (mounted) {
         setState(() {
           _isInitialized = true;

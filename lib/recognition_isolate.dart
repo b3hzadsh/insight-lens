@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:typed_data' show Uint8List;
+import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
@@ -70,6 +70,7 @@ void runIsolate(IsolateInitData initData) async {
   final labels = initData.labels;
 
   try {
+    print('[ISOLATE] Starting model initialization...');
     interpreter = Interpreter.fromBuffer(
       initData.modelBytes,
       options: InterpreterOptions()..threads = 1,

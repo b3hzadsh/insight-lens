@@ -16,8 +16,9 @@ class TensorflowService {
   bool get isReady => _isReady;
 
   Future<void> start() async {
-    final receivePort = ReceivePort();
+    final receivePort = ReceivePort(); // پورتی برای دریافت پیام از Isolate
     try {
+      // --- ۱. بارگذاری مدل و لیبل‌ها ---
       final modelFileName = 'mobilenet_v1_1.0_224.tflite';
       final labelsData = await rootBundle.loadString('assets/labels.txt');
       final modelData = await rootBundle.load('assets/$modelFileName');
@@ -27,28 +28,41 @@ class TensorflowService {
         '[MAIN THREAD] Model loaded: ${modelBytes.length} bytes, Labels: ${labels.length}',
       );
 
+      // --- ۲. آماده‌سازی داده‌های اولیه برای ارسال به Isolate ---
       final initData = IsolateInitData(
-        receivePort.sendPort,
+        receivePort.sendPort, // پورت خودمان را به Isolate می‌دهیم
         modelBytes,
         labels,
       );
+
+      // --- ۳. ایجاد و اجرای Isolate ---
       _isolate = await Isolate.spawn(runIsolate, initData);
       print('[MAIN THREAD] Isolate spawned. Attaching listener...');
 
+      // --- ۴. اصلاحیه کلیدی: استفاده از listen برای ارتباط دائمی ---
+      // حلقه‌ی 'await for' قبلی، بعد از اولین پیام خارج می‌شد.
+      // متد 'listen' یک شنونده‌ی دائمی ایجاد می‌کند که تمام پیام‌های ورودی
+      // (هم پیام اولیه و هم نتایج تشخیص) را مدیریت می‌کند.
       receivePort.listen((message) {
         print(
           '[MAIN THREAD] Message received from Isolate: ${message.runtimeType}',
         );
+
         if (message is SendPort) {
+          // اولین پیام، SendPort خود Isolate است. آن را ذخیره می‌کنیم.
           _isolateSendPort = message;
           _isReady = true;
-          print('✅ [MAIN THREAD] Isolate send port received.');
-        } else if (message is List<Map<String, dynamic>>) {
+          print(
+            '✅ [MAIN THREAD] Isolate send port received. Service is ready.',
+          );
+        } else if (message is List) {
+          // پیام‌های بعدی، نتایج تشخیص هستند.
           final recognitions = message
-              .map((e) => Recognition(e['label'], e['confidence']))
+              .map((e) => Recognition(e['label'], e['confidence'] as double))
               .toList();
-          _recognitionController.add(recognitions);
+          _recognitionController.add(recognitions); // ارسال نتایج به UI
         } else if (message is String && message.contains('Error')) {
+          // مدیریت پیام‌های خطا از سمت Isolate
           print('❌ $message');
           _recognitionController.addError(message);
         }
@@ -57,6 +71,7 @@ class TensorflowService {
       print('❌ Error starting TensorflowService: $e');
       _recognitionController.addError('Error starting service: $e');
       _isReady = false;
+      rethrow;
     }
   }
 
