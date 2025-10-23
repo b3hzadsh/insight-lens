@@ -3,7 +3,8 @@
 
 A high-performance, real-time object classification app built with Flutter. This project demonstrates a jank-free camera UI by offloading all heavy AI and image processing tasks to a separate thread using Dart Isolates.
 
-![Insight Lens Demo](https://YOUR_DEMO_GIF_HERE.gif) ---
+![Insight Lens Demo](![Screenrecorder-2025-10-23-17-40-04-452](https://github.com/user-attachments/assets/eef808cb-c193-4627-a0af-95344dd68eb3)
+) ---
 
 ## 🚀 Key Features
 
