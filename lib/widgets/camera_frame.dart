@@ -5,12 +5,12 @@ class CameraFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var _focusLineWidth = 2.0;
+    var focusLineWidth = 2.0;
     return Padding(
       padding: EdgeInsets.only(bottom: 250),
       child: Align(
         alignment: Alignment.bottomCenter,
-        child: Container(
+        child: SizedBox(
           height: MediaQuery.of(context).size.height - 250 - 100,
           width: MediaQuery.of(context).size.width - 40,
           child: Stack(
@@ -24,9 +24,9 @@ class CameraFrame extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border(
                       top: BorderSide(
-                          color: Colors.white, width: _focusLineWidth),
+                          color: Colors.white, width: focusLineWidth),
                       left: BorderSide(
-                          color: Colors.white, width: _focusLineWidth),
+                          color: Colors.white, width: focusLineWidth),
                     ),
                   ),
                 ),
@@ -40,9 +40,9 @@ class CameraFrame extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border(
                       top: BorderSide(
-                          color: Colors.white, width: _focusLineWidth),
+                          color: Colors.white, width: focusLineWidth),
                       right: BorderSide(
-                          color: Colors.white, width: _focusLineWidth),
+                          color: Colors.white, width: focusLineWidth),
                     ),
                   ),
                 ),
@@ -56,9 +56,9 @@ class CameraFrame extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                          color: Colors.white, width: _focusLineWidth),
+                          color: Colors.white, width: focusLineWidth),
                       right: BorderSide(
-                          color: Colors.white, width: _focusLineWidth),
+                          color: Colors.white, width: focusLineWidth),
                     ),
                   ),
                 ),
@@ -72,9 +72,9 @@ class CameraFrame extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                          color: Colors.white, width: _focusLineWidth),
+                          color: Colors.white, width: focusLineWidth),
                       left: BorderSide(
-                          color: Colors.white, width: _focusLineWidth),
+                          color: Colors.white, width: focusLineWidth),
                     ),
                   ),
                 ),

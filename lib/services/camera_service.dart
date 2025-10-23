@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:test_app/services/tensorflow-service.dart';
+import 'package:test_app/services/tensorflow_service.dart';
 
 class CameraService {
   static final CameraService _cameraService = CameraService._internal();

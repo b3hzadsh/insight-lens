@@ -3,7 +3,7 @@ import 'package:test_app/recognition_isolate.dart';
 
 class RecognitionWidget extends StatelessWidget {
   final List<Recognition> results;
-  const RecognitionWidget({Key? key, required this.results}) : super(key: key);
+  const RecognitionWidget({super.key, required this.results});
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +50,6 @@ class RecognitionWidget extends StatelessWidget {
                     padding: EdgeInsets.symmetric(vertical: 4),
                     child: Row(
                       children: [
-                        // شماره رتبه
                         Container(
                           width: 28,
                           height: 28,
@@ -70,8 +69,6 @@ class RecognitionWidget extends StatelessWidget {
                           ),
                         ),
                         SizedBox(width: 12),
-
-                        // نام کلاس
                         Expanded(
                           child: Text(
                             recognition.label,
@@ -85,8 +82,6 @@ class RecognitionWidget extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-
-                        // درصد اطمینان
                         Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: 10,

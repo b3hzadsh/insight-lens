@@ -1,4 +1,4 @@
-package com.example.test_app
+package com.bsh.khm.co.insightlens
 
 import io.flutter.embedding.android.FlutterActivity
 

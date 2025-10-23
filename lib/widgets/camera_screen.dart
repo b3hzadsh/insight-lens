@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class CameraScreen extends StatelessWidget {
   final CameraController? controller;
 
-  const CameraScreen({Key? key, required this.controller}) : super(key: key);
+  const CameraScreen({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -31,13 +31,13 @@ class CameraScreen extends StatelessWidget {
     final previewRatio = controller!.value.aspectRatio;
     return CameraPreview(controller!);
 
-    return Transform.scale(
-      scale: deviceRatio / previewRatio,
-      alignment: Alignment.center,
-      child: AspectRatio(
-        aspectRatio: previewRatio,
-        child: CameraPreview(controller!),
-      ),
-    );
+    // return Transform.scale(
+    //   scale: deviceRatio / previewRatio,
+    //   alignment: Alignment.center,
+    //   child: AspectRatio(
+    //     aspectRatio: previewRatio,
+    //     child: CameraPreview(controller!),
+    //   ),
+    // );
   }
 }

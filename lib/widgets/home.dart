@@ -1,15 +1,15 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:test_app/recognition_isolate.dart';
-import 'package:test_app/services/camera-service.dart';
-import 'package:test_app/services/tensorflow-service.dart';
-import 'package:test_app/widgets/camera-header.dart';
-import 'package:test_app/widgets/camera-screen.dart';
+import 'package:test_app/services/camera_service.dart';
+import 'package:test_app/services/tensorflow_service.dart';
+import 'package:test_app/widgets/camera_header.dart';
+import 'package:test_app/widgets/camera_screen.dart';
 import 'package:test_app/widgets/recognition.dart';
 
 class Home extends StatefulWidget {
   final CameraDescription camera;
-  const Home({Key? key, required this.camera}) : super(key: key);
+  const Home({super.key, required this.camera});
 
   @override
   _HomeState createState() => _HomeState();
@@ -32,7 +32,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   Future<void> _initializeServices() async {
     if (_isInitialized) return;
     try {
-      print('--- Starting One-Time Initialization ---');
       await _cameraService
           .startService(widget.camera)
           .timeout(
@@ -58,9 +57,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           _isInitialized = true;
         });
       }
-      print('--- One-Time Initialization Complete ---');
     } catch (e) {
-      print('❌ Error initializing services: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -74,7 +71,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
     switch (state) {
       case AppLifecycleState.resumed:
-        print('App Resumed: Starting camera stream.');
         if (_isInitialized) {
           _cameraService.startStreaming();
         }
@@ -83,7 +79,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
-        print('App Paused/Inactive: Stopping camera stream.');
         _cameraService.stopImageStream();
         break;
     }
@@ -95,7 +90,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     _cameraService.stopImageStream();
     _cameraService.dispose();
     _tensorflowService.stop();
-    print('✅ Home disposed');
     super.dispose();
   }
 
@@ -107,16 +101,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     return Scaffold(
       body: Stack(
-        fit: StackFit.expand, // دوربین تمام صفحه را پوشش می‌دهد
+        fit: StackFit.expand,
         children: [
-          // دوربین - لایه اول (پس‌زمینه)
           SizedBox.expand(
             child: CameraScreen(controller: _cameraService.cameraController),
           ),
-          // هدر (لوگو) - لایه دوم (بالای صفحه)
           Positioned(top: 0, left: 0, right: 0, child: CameraHeader()),
-      
-          // نتایج تشخیص - لایه سوم (پایین صفحه)
           StreamBuilder<List<Recognition>>(
             stream: _tensorflowService.recognitionStream,
             builder: (context, snapshot) {

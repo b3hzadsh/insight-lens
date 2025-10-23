@@ -9,7 +9,6 @@ Future<void> main() async {
   try {
     var status = await Permission.camera.request();
     if (!status.isGranted) {
-      print('❌ Camera permission denied');
       runApp(
         MaterialApp(
           home: Scaffold(
@@ -22,7 +21,6 @@ Future<void> main() async {
 
     final cameras = await availableCameras();
     if (cameras.isEmpty) {
-      print('❌ No cameras available');
       runApp(
         MaterialApp(
           home: Scaffold(body: Center(child: Text('No camera found'))),
@@ -32,7 +30,6 @@ Future<void> main() async {
     }
 
     final firstCamera = cameras.first;
-    print('✅ Camera loaded: ${firstCamera.name}');
     runApp(
       MaterialApp(
         theme: ThemeData(
@@ -43,7 +40,6 @@ Future<void> main() async {
       ),
     );
   } catch (e) {
-    print('❌ Error initializing app: $e');
     runApp(
       MaterialApp(
         home: Scaffold(body: Center(child: Text('Error initializing app: $e'))),
