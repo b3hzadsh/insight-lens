@@ -12,6 +12,11 @@
 .swiftpm/
 migrate_working_dir/
 
+# my ignores
+android/key.properties
+key.properties
+/android/key.properties
+/android/app/*.jks
 # IntelliJ related
 *.iml
 *.ipr

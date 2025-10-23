@@ -21,6 +21,7 @@ class TensorflowService {
   bool get isReady => _isReady;
   final Completer<void> _readyCompleter = Completer<void>();
   Future<void> get readyFuture => _readyCompleter.future;
+  Completer<void>? _inferenceCompleter;
 
   Future<void> start() async {
     final receivePort = ReceivePort(); // پورتی برای دریافت پیام از Isolate
@@ -70,6 +71,7 @@ class TensorflowService {
           final recognitions = message
               .map((e) => Recognition(e['label'], e['confidence'] as double))
               .toList();
+          _inferenceCompleter?.complete();
           _recognitionController.add(recognitions); // ارسال نتایج به UI
         } else if (message is String && message.contains('Error')) {
           if (!_readyCompleter.isCompleted) {
@@ -78,6 +80,7 @@ class TensorflowService {
           // مدیریت پیام‌های خطا از سمت Isolate
           print('❌ $message');
           _recognitionController.addError(message);
+          _inferenceCompleter?.completeError(message);
         }
       });
     } catch (e) {
@@ -88,11 +91,16 @@ class TensorflowService {
     }
   }
 
-  void runModel(CameraImage image) {
+  // ***** این تابع رو کامل جایگزین کن *****
+  Future<void> runModel(CameraImage image) {
     if (_isolateSendPort == null || !_isReady) {
       print('❌ Isolate SendPort not initialized or not ready');
-      return;
+      return Future.value(); // یک Future خالی برگردون
     }
+
+    // یک Completer جدید برای این درخواست inference خاص بساز
+    _inferenceCompleter = Completer<void>();
+
     try {
       final isolateData = IsolateCameraImage(
         image.planes.map((p) => p.bytes).toList(),
@@ -102,13 +110,20 @@ class TensorflowService {
         image.planes.length > 1 ? image.planes[1].bytesPerRow : image.width,
         image.planes.length > 1 ? image.planes[1].bytesPerPixel ?? 1 : 1,
       );
+
       _isolateSendPort!.send(isolateData);
       print(
         '[MAIN THREAD] Frame sent to isolate: ${image.width}x${image.height}',
       );
     } catch (e) {
       print('❌ Error sending frame to isolate: $e');
+      // اگر در ارسال خطا خورد، Completer رو با خطا complete کن
+      _inferenceCompleter?.completeError(e);
     }
+
+    // Future مربوط به Completer رو برگردون.
+    // camera-service منتظر این Future می‌مونه.
+    return _inferenceCompleter!.future;
   }
 
   void stop() {
@@ -119,6 +134,10 @@ class TensorflowService {
     _isolate = null;
     _isolateSendPort = null;
     _isReady = false;
+    if (_inferenceCompleter != null && !_inferenceCompleter!.isCompleted) {
+      _inferenceCompleter!.completeError('Service stopped');
+    }
+    _inferenceCompleter = null;
     _recognitionController.close();
     print('✅ TensorflowService stopped');
   }
