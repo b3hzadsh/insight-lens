@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*.*.*'
   workflow_dispatch:  # Allow manual run
+  
+permissions:
+  contents: write
 
 jobs:
   build-android:
