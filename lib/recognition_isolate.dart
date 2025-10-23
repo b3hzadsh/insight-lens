@@ -11,6 +11,7 @@ class IsolateCameraImage {
   final List<Uint8List> planes;
   final int height;
   final int width;
+  final int yRowStride; // <--- این خط را اضافه کنید
   final int uvRowStride;
   final int uvPixelStride;
 
@@ -18,6 +19,7 @@ class IsolateCameraImage {
     this.planes,
     this.height,
     this.width,
+    this.yRowStride, // <--- این خط را اضافه کنید
     this.uvRowStride,
     this.uvPixelStride,
   );
@@ -37,51 +39,53 @@ class Recognition {
 }
 
 // تبدیل YUV420 بدون استفاده از helper
-img.Image? _convertYUV420(IsolateCameraImage image) {
+img.Image? _convertYUV420ToRGB(IsolateCameraImage image) {
   final int width = image.width;
   final int height = image.height;
+  final int yRowStride = image.yRowStride; // <--- این خط را اضافه کنید
   final int uvRowStride = image.uvRowStride;
   final int uvPixelStride = image.uvPixelStride;
 
   try {
-    print('[ISOLATE] Converting YUV420 to RGB...');
-    print('[ISOLATE] Image size: ${width}x${height}');
-    print('[ISOLATE] UV stride: row=$uvRowStride, pixel=$uvPixelStride');
-
-    final yuv420image = img.Image(width: width, height: height);
-
-    // یک حلقه ساده برای تبدیل YUV به RGB
-    // فرمول تبدیل:
-    // R = Y + 1.402 * (V - 128)
-    // G = Y - 0.344136 * (U - 128) - 0.714136 * (V - 128)
-    // B = Y + 1.772 * (U - 128)
+    final outputImage = img.Image(width: width, height: height);
 
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
         final int uvIndex = uvPixelStride * (x ~/ 2) + uvRowStride * (y ~/ 2);
-        final int index = y * width + x;
+        // final int index = y * width + x;
+        final int index = y * yRowStride + x; // <--- خط جدید (صحیح)
 
-        // دریافت مقادیر YUV
-        final yp = image.planes[0][index];
-        final up = image.planes[1][uvIndex];
-        final vp = image.planes[2][uvIndex];
+        final int yp = image.planes[0][index];
+        final int up = image.planes[1][uvIndex];
+        final int vp = image.planes[2][uvIndex];
 
-        // تبدیل به RGB
-        int r = (yp + vp * 1436 / 1024 - 179).round().clamp(0, 255);
-        int g = (yp - up * 46549 / 131072 + 44 - vp * 93604 / 131072 + 91)
-            .round()
-            .clamp(0, 255);
-        int b = (yp + up * 1814 / 1024 - 227).round().clamp(0, 255);
+        // تبدیل دقیق YUV به RGB (فرمول استاندارد ITU-R BT.601)
+        double yVal = yp.toDouble();
+        double uVal = up.toDouble() - 128.0;
+        double vVal = vp.toDouble() - 128.0;
 
-        // تنظیم pixel در تصویر
-        yuv420image.setPixelRgba(x, y, r, g, b, 255);
+        int r = (yVal + 1.402 * vVal).clamp(0, 255).toInt();
+        int g = (yVal - 0.344136 * uVal - 0.714136 * vVal)
+            .clamp(0, 255)
+            .toInt();
+        int b = (yVal + 1.772 * uVal).clamp(0, 255).toInt();
+        //
+        // فرمول بهینه‌شده برای تبدیل YUV به RGB
+        // int r = (yVal + 1.402 * (vVal - 128)).clamp(0, 255).toInt();
+        // int g = (yVal - 0.344136 * (uVal - 128) - 0.714136 * (vVal - 128))
+        //     .clamp(0, 255)
+        //     .toInt();
+        // int b = (yVal + 1.772 * (uVal - 128)).clamp(0, 255).toInt();
+        //
+        outputImage.setPixelRgba(x, y, r, g, b, 255);
       }
     }
 
-    print('[ISOLATE] YUV420 conversion completed: ${width}x${height} -> RGB');
-    return yuv420image;
+    // چرخش برای تصحیح orientation دوربین (بسته به حالت گوشی ممکن است نیاز به تغییر داشته باشد)
+    final rotatedImage = img.copyRotate(outputImage, angle: 270);
+    return rotatedImage;
   } catch (e) {
-    print('[ISOLATE] ❌ Error in YUV420 conversion: $e');
+    print('[ISOLATE] ❌ Error converting YUV to RGB: $e');
     return null;
   }
 }
@@ -96,6 +100,9 @@ void runIsolate(IsolateInitData initData) async {
       initData.modelBytes,
       options: InterpreterOptions()..threads = 1,
     );
+    print(
+      "hi shape : ${interpreter.getInputTensor(0).shape}",
+    ); // [1, 224, 224, 3]
     print('[ISOLATE] Model loaded successfully: ${labels.length} labels');
   } catch (e) {
     print('[ISOLATE] Error loading model: $e');
@@ -158,21 +165,19 @@ List<Map<String, dynamic>> _performInference(
 List<List<List<List<double>>>>? _processCameraImage(
   IsolateCameraImage cameraImage,
 ) {
-  final int modelInputSize = 224;
-  img.Image? convertedImage;
+  const int modelInputSize = 224;
+  img.Image? rgbImage;
 
   try {
+    // ۱. تبدیل به RGB بر اساس پلتفرم
     if (Platform.isAndroid && cameraImage.planes.length == 3) {
-      convertedImage = _convertYUV420(cameraImage);
+      rgbImage = _convertYUV420ToRGB(cameraImage);
     } else if (Platform.isIOS && cameraImage.planes.length == 1) {
-      convertedImage = img.Image.fromBytes(
+      rgbImage = img.Image.fromBytes(
         width: cameraImage.width,
         height: cameraImage.height,
         bytes: cameraImage.planes[0].buffer,
-        order: img.ChannelOrder.bgra,
-      );
-      print(
-        '[ISOLATE] BGRA converted to RGB: ${cameraImage.width}x${cameraImage.height}',
+        order: img.ChannelOrder.rgba,
       );
     } else {
       print(
@@ -181,18 +186,22 @@ List<List<List<List<double>>>>? _processCameraImage(
       return null;
     }
 
-    if (convertedImage == null) {
-      print('[ISOLATE] Failed to convert image');
+    if (rgbImage == null) {
+      print('[ISOLATE] Failed to convert image to RGB');
       return null;
     }
 
+    // ۲. resize & crop به سایز مدل
     final resizedImage = img.copyResizeCropSquare(
-      convertedImage,
+      rgbImage,
       size: modelInputSize,
     );
 
-    var imageBytes = resizedImage.getBytes(order: img.ChannelOrder.rgb);
-    var modelInput = List.generate(
+    // ۳. استخراج بایت‌های RGB
+    final imageBytes = resizedImage.getBytes(order: img.ChannelOrder.rgb);
+
+    // ۴. ساخت Tensor [1,224,224,3] با نرمال‌سازی [0,1]
+    final modelInput = List.generate(
       1,
       (_) => List.generate(
         modelInputSize,
@@ -204,15 +213,20 @@ List<List<List<List<double>>>>? _processCameraImage(
     int pixelIndex = 0;
     for (int i = 0; i < modelInputSize; i++) {
       for (int j = 0; j < modelInputSize; j++) {
-        // نرمال‌سازی صحیح برای MobileNet: -1 تا +1
-        modelInput[0][i][j][0] = (imageBytes[pixelIndex++] / 127.5) - 1.0; // R
-        modelInput[0][i][j][1] = (imageBytes[pixelIndex++] / 127.5) - 1.0; // G
-        modelInput[0][i][j][2] = (imageBytes[pixelIndex++] / 127.5) - 1.0; // B
+        // print('value of r is : ${imageBytes[pixelIndex++]}');
+        final r = (imageBytes[pixelIndex++] - 127.5) / 127.5;
+        final g = (imageBytes[pixelIndex++] - 127.5) / 127.5;
+        final b = (imageBytes[pixelIndex++] - 127.5) / 127.5;
+
+        modelInput[0][i][j][0] = r;
+        modelInput[0][i][j][1] = g;
+        modelInput[0][i][j][2] = b;
       }
     }
+    print('[ISOLATE] ✅ Image processed successfully for MobileNet V1');
     return modelInput;
   } catch (e) {
-    print('[ISOLATE] Error processing camera image: $e');
+    print('[ISOLATE] ❌ Error processing camera image: $e');
     return null;
   }
 }
