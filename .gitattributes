@@ -1,0 +1,10 @@
+*.dart linguist-language=Dart
+
+*.tflite linguist-detectable=false
+*.bin linguist-detectable=false
+*.model linguist-detectable=false
+assets/* linguist-detectable=false
+
+*.html linguist-detectable=false
+*.js linguist-detectable=false
+*.css linguist-detectable=false
