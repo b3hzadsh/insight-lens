@@ -10,20 +10,32 @@ class TensorflowService {
   factory TensorflowService() => _instance;
 
   TensorflowService._internal();
-  final StreamController<List<Recognition>> _recognitionController =
+
+  StreamController<List<Recognition>> _recognitionController =
       StreamController.broadcast();
   Stream<List<Recognition>> get recognitionStream =>
       _recognitionController.stream;
+
   Isolate? _isolate;
   SendPort? _isolateSendPort;
   bool _isReady = false;
   bool get isReady => _isReady;
-  final Completer<void> _readyCompleter = Completer<void>();
+
+  late Completer<void> _readyCompleter;
   Future<void> get readyFuture => _readyCompleter.future;
+
   Completer<void>? _inferenceCompleter;
 
+  ReceivePort? _receivePort;
+  StreamSubscription? _portSubscription;
+
   Future<void> start({required String labelFileName}) async {
-    final receivePort = ReceivePort();
+    _readyCompleter = Completer<void>();
+    _isReady = false;
+    if (_recognitionController.isClosed) {
+      _recognitionController = StreamController.broadcast();
+    }
+    _receivePort = ReceivePort();
     try {
       final modelFileName = 'mobilenet_v1_1.0_224.tflite';
       final labelsData = await rootBundle.loadString('assets/$labelFileName');
@@ -32,13 +44,15 @@ class TensorflowService {
       final labels = labelsData.split('\n');
 
       final initData = IsolateInitData(
-        receivePort.sendPort,
+        _receivePort!.sendPort,
         modelBytes,
         labels,
       );
 
       _isolate = await Isolate.spawn(runIsolate, initData);
-      receivePort.listen((message) {
+
+      await _portSubscription?.cancel();
+      _portSubscription = _receivePort!.listen((message) {
         if (message is SendPort) {
           _isolateSendPort = message;
           _isReady = true;
@@ -99,10 +113,19 @@ class TensorflowService {
     _isolate = null;
     _isolateSendPort = null;
     _isReady = false;
+    _portSubscription?.cancel();
+    _portSubscription = null;
+    _receivePort?.close();
+    _receivePort = null;
     if (_inferenceCompleter != null && !_inferenceCompleter!.isCompleted) {
       _inferenceCompleter!.completeError('Service stopped');
     }
     _inferenceCompleter = null;
-    _recognitionController.close();
+    if (!_recognitionController.isClosed) {
+      _recognitionController.close();
+    }
+    if (!_readyCompleter.isCompleted) {
+      _readyCompleter.completeError('Service stopped during initialization');
+    }
   }
 }
