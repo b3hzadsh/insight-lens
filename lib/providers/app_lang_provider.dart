@@ -1,0 +1,35 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class AppLanguageProvider extends ChangeNotifier {
+  String? _languageCode;
+  bool _isLoading = true;
+  static const String _localeKey = 'locale';
+
+  // --- Getters برای GoRouter و MaterialApp ---
+  bool get isLoading => _isLoading;
+  String? get languageCode => _languageCode;
+
+  /// این تنها چیزی است که MaterialApp برای تنظیم l10n نیاز دارد
+  Locale? get locale => (_languageCode == null) ? null : Locale(_languageCode!);
+
+  AppLanguageProvider() {
+    loadLanguage();
+  }
+
+  Future<void> loadLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    _languageCode = prefs.getString(_localeKey);
+    _isLoading = false;
+    notifyListeners(); // به GoRouter و MaterialApp خبر بده
+  }
+
+  Future<void> setLanguage(String code) async {
+    if (_languageCode == code) return;
+    _languageCode = code;
+    notifyListeners(); // به GoRouter و MaterialApp خبر بده
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_localeKey, code);
+  }
+}

@@ -1,5 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart' show Consumer, Provider;
+import 'package:test_app/l10n/app_localizations.dart' show AppLocalizations;
+import 'package:test_app/providers/ame.dart';
 import 'package:test_app/recognition_isolate.dart';
 import 'package:test_app/services/camera_service.dart';
 import 'package:test_app/services/tensorflow_service.dart';
@@ -30,6 +33,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   Future<void> _initializeServices() async {
+    final labelFileName = AppLocalizations.of(context)!.lebelsFileName;
     if (_isInitialized) return;
     try {
       await _cameraService
@@ -40,12 +44,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               throw Exception('Camera initialization timed out');
             },
           );
-      await _tensorflowService.start().timeout(
-        Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('TensorflowService initialization timed out');
-        },
-      );
+      await _tensorflowService
+          .start(labelFileName: labelFileName)
+          .timeout(
+            Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('TensorflowService initialization timed out');
+            },
+          );
       await _cameraService.startStreaming().timeout(
         Duration(seconds: 5),
         onTimeout: () {

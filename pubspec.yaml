@@ -21,6 +21,13 @@ dependencies:
   tflite_flutter: ^0.11.0
   image: ^4.5.4
   permission_handler: ^12.0.1
+  provider: ^6.1.5+1
+  shared_preferences: ^2.5.3
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+  go_router: ^16.3.0
+  
 
 dev_dependencies:
   flutter_test:
@@ -29,11 +36,11 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.4
   change_app_package_name: ^1.4.0
-  # change_app_package_name: ^1.5.0
 
 flutter:
 
   uses-material-design: true
+  generate: true
   assets:
     - assets/mobilenet_v1_1.0_224.tflite
     - assets/labels.txt

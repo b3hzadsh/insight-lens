@@ -22,11 +22,11 @@ class TensorflowService {
   Future<void> get readyFuture => _readyCompleter.future;
   Completer<void>? _inferenceCompleter;
 
-  Future<void> start() async {
+  Future<void> start({required String labelFileName}) async {
     final receivePort = ReceivePort();
     try {
       final modelFileName = 'mobilenet_v1_1.0_224.tflite';
-      final labelsData = await rootBundle.loadString('assets/labels_fa.txt');
+      final labelsData = await rootBundle.loadString('assets/$labelFileName');
       final modelData = await rootBundle.load('assets/$modelFileName');
       final modelBytes = modelData.buffer.asUint8List();
       final labels = labelsData.split('\n');

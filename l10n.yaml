@@ -1,0 +1,4 @@
+arb-dir: lib/l10n # آدرس فایل‌های ترجمه
+template-arb-file: app_en.arb # فایل الگوی شما (مثلا انگلیسی)
+output-localization-file: app_localizations.dart # فایل خروجی دارت که اتوماتیک ساخته می‌شود
+output-class: AppLocalizations # نام کلاسی که ساخته می‌شود
