@@ -6,9 +6,9 @@ A high-performance, real-time object classification app built with Flutter. This
 ---
 Screenshots 
 <p align="center">
-  <img src="[screenshots/home.png](https://github.com/user-attachments/assets/047e0a60-dea3-45a2-bd41-a2112b9902ce)" width="200">
+  <img src="https://github.com/user-attachments/assets/047e0a60-dea3-45a2-bd41-a2112b9902ce" width="200">
   <img src="https://github.com/user-attachments/assets/519df573-dbda-4436-abcb-e41f2158a296" width="200">
-  <img src="[screenshots/settings.png](https://github.com/user-attachments/assets/d1814a25-bbc3-4664-95dd-0c590e35e352)" width="200">
+  <img src="https://github.com/user-attachments/assets/d1814a25-bbc3-4664-95dd-0c590e35e352" width="200">
 </p>
 
 
