@@ -90,6 +90,7 @@ This project requires the `mobilenet_v1_1.0_224.tflite` model and a correspondin
 /assets
 ├── mobilenet_v1_1.0_224.tflite
 └── labels_fa.txt
+└── labels.txt
 
 ````
 
@@ -100,6 +101,7 @@ flutter:
   assets:
     - assets/mobilenet_v1_1.0_224.tflite
     - assets/labels_fa.txt
+    - assets/labels.txt
 ````
 
 ### 3\. Install and Run
@@ -124,6 +126,3 @@ flutter:
     ```
 
 <!-- end list -->
-
-```
-```
