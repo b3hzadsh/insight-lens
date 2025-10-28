@@ -110,7 +110,7 @@ flutter:
 
     ```bash
     git clone https://github.com/b3hzadsh/insight-lens.git
-cd insight-lens
+    cd insight-lens
 
     ```
 
