@@ -109,8 +109,9 @@ flutter:
 1.  Clone the repository:
 
     ```bash
-    git clone [https://github.com/your-username/insight-lens.git](https://github.com/your-username/insight-lens.git)
-    cd insight-lens
+    git clone https://github.com/b3hzadsh/insight-lens.git
+cd insight-lens
+
     ```
 
 2.  Install dependencies:
