@@ -12,7 +12,7 @@ class CameraService {
   CameraController? _cameraController;
   CameraController? get cameraController => _cameraController;
   bool _isPredicting = false;
-  int _frameCounter = 0;
+  // int _frameCounter = 0;
 
   Future<void> startService(CameraDescription cameraDescription) async {
     try {

@@ -1,5 +1,6 @@
 {
     "@@locale": "fa",
     "lebelsFileName": "labels_fa.txt",
-    "changeLanguage": "تغییر زبان"
+    "changeLanguage": "تغییر زبان",
+    "scanning": "در حال اسکن تصویر ..."
 }

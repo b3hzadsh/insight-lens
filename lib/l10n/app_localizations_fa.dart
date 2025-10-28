@@ -13,4 +13,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get changeLanguage => 'تغییر زبان';
+
+  @override
+  String get scanning => 'در حال اسکن تصویر ...';
 }

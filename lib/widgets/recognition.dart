@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:test_app/l10n/app_localizations.dart';
 import 'package:test_app/recognition_isolate.dart';
 
 class RecognitionWidget extends StatelessWidget {
@@ -31,7 +32,7 @@ class RecognitionWidget extends StatelessWidget {
               ? [
                   Center(
                     child: Text(
-                      'Scanning...',
+                      AppLocalizations.of(context)!.scanning,
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 16,

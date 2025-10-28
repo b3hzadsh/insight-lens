@@ -6,11 +6,9 @@ class AppLanguageProvider extends ChangeNotifier {
   bool _isLoading = true;
   static const String _localeKey = 'locale';
 
-  // --- Getters برای GoRouter و MaterialApp ---
   bool get isLoading => _isLoading;
   String? get languageCode => _languageCode;
 
-  /// این تنها چیزی است که MaterialApp برای تنظیم l10n نیاز دارد
   Locale? get locale => (_languageCode == null) ? null : Locale(_languageCode!);
 
   AppLanguageProvider() {
@@ -21,13 +19,13 @@ class AppLanguageProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _languageCode = prefs.getString(_localeKey);
     _isLoading = false;
-    notifyListeners(); // به GoRouter و MaterialApp خبر بده
+    notifyListeners();
   }
 
   Future<void> setLanguage(String code) async {
     if (_languageCode == code) return;
     _languageCode = code;
-    notifyListeners(); // به GoRouter و MaterialApp خبر بده
+    notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_localeKey, code);

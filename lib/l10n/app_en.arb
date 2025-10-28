@@ -1,5 +1,6 @@
 {
     "@@locale": "en",
     "lebelsFileName": "labels.txt",
-    "changeLanguage": "Change Language"
+    "changeLanguage": "Change Language",
+    "scanning" : "Scanning ..."
 }

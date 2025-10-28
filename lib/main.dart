@@ -1,15 +1,11 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' show context;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:test_app/l10n/app_localizations.dart';
-import 'package:test_app/providers/ame.dart';
-import 'package:test_app/navigation/router.dart' show router;
 import 'package:test_app/navigation/router.dart';
 import 'package:test_app/providers/app_lang_provider.dart'
     show AppLanguageProvider;
-import 'package:test_app/widgets/home.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,7 +50,7 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({super.key, required this.firstCamera});
+  const MyApp({super.key, required this.firstCamera});
   final CameraDescription firstCamera;
 
   @override
